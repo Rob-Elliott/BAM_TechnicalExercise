@@ -60,11 +60,6 @@ namespace StargateAPI.Business.Commands
         }
         public async Task<CreateAstronautDutyResult> Handle(CreateAstronautDuty request, CancellationToken cancellationToken)
         {
-            //var query = $"SELECT * FROM [Person] WHERE \'{request.Name}\' = Name";
-            //var person = await _context.Connection.QueryFirstOrDefaultAsync<Person>(query);
-            //query = $"SELECT * FROM [AstronautDetail] WHERE {person.Id} = PersonId";
-            //var astronautDetail = await _context.Connection.QueryFirstOrDefaultAsync<AstronautDetail>(query);
-
             var person = _context.People
                 .Include(p => p.AstronautDetail)
                 .Include(p => p.AstronautDuties)
@@ -95,9 +90,6 @@ namespace StargateAPI.Business.Commands
             }
 
             _context.Update(person); // probably not necessary, called again below
-
-            //query = $"SELECT * FROM [AstronautDuty] WHERE {person.Id} = PersonId Order By DutyStartDate Desc";
-            //var astronautDuty = await _context.Connection.QueryFirstOrDefaultAsync<AstronautDuty>(query);
 
             // we are assuming the new Duty is chronologically after the most recent Duty in the DB.
             // update most recent Duty End Date.

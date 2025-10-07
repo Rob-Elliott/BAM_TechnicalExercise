@@ -33,10 +33,6 @@ namespace StargateAPI.Business.Queries
                     .Include(p => p.AstronautDuties)
                     .FirstOrDefault(p => p.Name.ToLower() == request.Name.ToLower());
 
-            //var query = $"SELECT a.Id as PersonId, a.Name, b.CurrentRank, b.CurrentDutyTitle, b.CareerStartDate, b.CareerEndDate FROM [Person] a LEFT JOIN [AstronautDetail] b on b.PersonId = a.Id WHERE \'{request.Name}\' = a.Name";
-            //var person = await _context.Connection.QueryFirstOrDefaultAsync<PersonAstronaut>(query);
-
-
             // if no person was found
             if (person == null)
             {
@@ -44,10 +40,6 @@ namespace StargateAPI.Business.Queries
             }
 
             result.Person = new PersonAstronaut(person, person.AstronautDetail);
-
-            //var query = $"SELECT * FROM [AstronautDuty] WHERE {person.Id} = PersonId Order By DutyStartDate Desc";
-            //var duties = await _context.Connection.QueryAsync<AstronautDuty>(query);
-
             result.AstronautDuties = person.AstronautDuties.OrderByDescending(d => d.DutyStartDate).Select(d => { d.Person = null; return d; }).ToList();
 
             return result;

@@ -1,6 +1,7 @@
 using System.Net;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using StargateAPI.Business.Commands;
 using StargateAPI.Business.Queries;
@@ -18,7 +19,7 @@ namespace StarGateTests
             mediatorMock.Setup(m => m.Send(It.IsAny<GetAstronautDutiesByName>(), It.IsAny<CancellationToken>()))
                         .ReturnsAsync(mediatorResult);
 
-            var controller = new AstronautDutyController(mediatorMock.Object);
+            var controller = new AstronautDutyController(mediatorMock.Object, Mock.Of<ILogger<AstronautDutyController>>());
 
             var result = await controller.GetAstronautDutiesByName("neil");
 
@@ -36,7 +37,7 @@ namespace StarGateTests
             mediatorMock.Setup(m => m.Send(It.IsAny<CreateAstronautDuty>(), It.IsAny<CancellationToken>()))
                         .ReturnsAsync(response);
 
-            var controller = new AstronautDutyController(mediatorMock.Object);
+            var controller = new AstronautDutyController(mediatorMock.Object, Mock.Of<ILogger<AstronautDutyController>>());
 
             var request = new CreateAstronautDuty { Name = "Buzz Aldrin", Rank = "Commander", DutyTitle = "Pilot", DutyStartDate = System.DateTime.UtcNow.Date };
 

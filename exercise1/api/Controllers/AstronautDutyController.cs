@@ -11,9 +11,11 @@ namespace StargateAPI.Controllers
     public class AstronautDutyController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public AstronautDutyController(IMediator mediator)
+        private readonly ILogger<AstronautDutyController> _logger;
+        public AstronautDutyController(IMediator mediator, ILogger<AstronautDutyController> logger)
         {
             _mediator = mediator;
+            _logger = logger;
         }
 
         [HttpGet("{name}")]
@@ -26,14 +28,18 @@ namespace StargateAPI.Controllers
                     Name = name
                 });
 
+                _logger.LogInformation($"GetAstronautDutiesByName({name}): Success");
+
                 return this.GetResponse(result);
             }
             catch (BadHttpRequestException ex)
             {
+                _logger.LogError($"GetAstronautDutiesByName({name}): BadRequest", ex);
                 return this.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"GetAstronautDutiesByName({name}): ServerError", ex);
                 return this.GetResponse(new BaseResponse()
                 {
                     Message = ex.Message,

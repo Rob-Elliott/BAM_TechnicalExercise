@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using StargateAPI;
 using StargateAPI.Business.Commands;
 using StargateAPI.Business.Data;
@@ -12,6 +13,7 @@ builder.Services.AddControllers(options =>
     // Prefix controller routes with /api so Razor Pages are at root
     options.Conventions.Add(new RoutePrefixConvention(new Microsoft.AspNetCore.Mvc.RouteAttribute("api")));
 });
+
 builder.Services.AddRazorPages();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -27,6 +29,19 @@ builder.Services.AddMediatR(cfg =>
     cfg.AddRequestPreProcessor<CreateAstronautDutyPreProcessor>();
     cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
 });
+
+var approot = builder.Configuration.GetValue<string>(WebHostDefaults.ContentRootKey);
+var dbPath = Path.Combine(approot, "starbase.db");
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.SQLite(dbPath, "Logs") // Specify the SQLite database file
+    .WriteTo.Console()
+    .WriteTo.Debug()
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
 
 var app = builder.Build();
 

@@ -2,6 +2,7 @@ using System.Net;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using StargateAPI.Business.Commands;
 using StargateAPI.Business.Queries;
@@ -19,7 +20,7 @@ namespace StarGateTests
             mediatorMock.Setup(m => m.Send(It.IsAny<GetPeople>(), It.IsAny<CancellationToken>()))
                         .ReturnsAsync(mediatorResult);
 
-            var controller = new PersonController(mediatorMock.Object);
+            var controller = new PersonController(mediatorMock.Object, Mock.Of<ILogger<PersonController>>());
 
             var result = await controller.GetPeople();
 
@@ -36,7 +37,7 @@ namespace StarGateTests
             mediatorMock.Setup(m => m.Send(It.IsAny<GetPersonByName>(), It.IsAny<CancellationToken>()))
                         .ThrowsAsync(new BadHttpRequestException("bad"));
 
-            var controller = new PersonController(mediatorMock.Object);
+            var controller = new PersonController(mediatorMock.Object, Mock.Of<ILogger<PersonController>>());
 
             var result = await controller.GetPersonByName("Buzz Aldrin");
 
@@ -52,7 +53,7 @@ namespace StarGateTests
             mediatorMock.Setup(m => m.Send(It.IsAny<StargateAPI.Business.Commands.CreatePerson>(), It.IsAny<CancellationToken>()))
                         .ReturnsAsync(mediatorResult);
 
-            var controller = new PersonController(mediatorMock.Object);
+            var controller = new PersonController(mediatorMock.Object, Mock.Of<ILogger<PersonController>>());
 
             var result = await controller.CreatePerson("Buzz Aldrin");
 
@@ -70,7 +71,7 @@ namespace StarGateTests
             mediatorMock.Setup(m => m.Send(It.IsAny<StargateAPI.Business.Commands.UpdatePerson>(), It.IsAny<CancellationToken>()))
                         .ReturnsAsync(mediatorResult);
 
-            var controller = new PersonController(mediatorMock.Object);
+            var controller = new PersonController(mediatorMock.Object, Mock.Of<ILogger<PersonController>>());
 
             var request = new StargateAPI.Business.Commands.UpdatePerson { Id = 99, Name = "Buzz TheOther" };
 

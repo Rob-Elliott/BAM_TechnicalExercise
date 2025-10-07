@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Xml.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using StargateAPI.Business.Commands;
@@ -12,9 +13,11 @@ namespace StargateAPI.Controllers
     public class PersonController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public PersonController(IMediator mediator)
+        private readonly ILogger<PersonController> _logger;
+        public PersonController(IMediator mediator, ILogger<PersonController> logger)
         {
             _mediator = mediator;
+            _logger = logger;
         }
 
         [HttpGet("")]
@@ -24,14 +27,17 @@ namespace StargateAPI.Controllers
             {
                 var result = await _mediator.Send(new GetPeople() { });
 
+                _logger.LogInformation($"GetPeople(): Success");
                 return this.GetResponse(result);
             }
             catch (BadHttpRequestException ex)
             {
+                _logger.LogError($"GetPeople(): BadRequest", ex);
                 return this.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"GetPeople(): ServerError", ex);
                 return this.GetResponse(new BaseResponse()
                 {
                     Message = ex.Message,
@@ -51,14 +57,17 @@ namespace StargateAPI.Controllers
                     Name = name
                 });
 
+                _logger.LogInformation($"GetPersonByName({name}): Success");
                 return this.GetResponse(result);
             }
             catch (BadHttpRequestException ex)
             {
+                _logger.LogError($"GetPersonByName({name}): BadRequest", ex);
                 return this.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"GetPersonByName({name}): ServerError", ex);
                 return this.GetResponse(new BaseResponse()
                 {
                     Message = ex.Message,
@@ -78,14 +87,18 @@ namespace StargateAPI.Controllers
                     Name = name
                 });
 
+                _logger.LogInformation($"CreatePerson({name}): Success");
+
                 return this.GetResponse(result);
             }
             catch (BadHttpRequestException ex)
             {
+                _logger.LogError($"CreatePerson({name}): BadRequest", ex);
                 return this.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"CreatePerson({name}): ServerError", ex);
                 return this.GetResponse(new BaseResponse()
                 {
                     Message = ex.Message,
@@ -102,14 +115,17 @@ namespace StargateAPI.Controllers
             try
             {
                 var result = await _mediator.Send(request);
+                _logger.LogInformation($"UpdatePerson({request.Id}): Success");
                 return this.GetResponse(result);
             }
             catch (BadHttpRequestException ex)
             {
+                _logger.LogError($"UpdatePerson({request.Id}): BadRequest", ex);
                 return this.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"UpdatePerson({request.Id}): ServerError", ex);
                 return this.GetResponse(new BaseResponse()
                 {
                     Message = ex.Message,
