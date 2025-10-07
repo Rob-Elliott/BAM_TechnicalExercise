@@ -26,17 +26,17 @@ namespace StargateAPI.Business.Commands
         {
             var person = _context.People.AsNoTracking()
                 .FirstOrDefault(z => z.Id == request.Id);
-            
+
             if (person is null)
                 throw new BadHttpRequestException($"Person [{request.Id}] not found");
-            
+
             // don't allow changing the name to an existing name
             var duplicate = _context.People.AsNoTracking()
                 .FirstOrDefault(z => z.Name.ToLower() == request.Name.ToLower() && z.Id != request.Id);
-            
+
             if (duplicate is not null)
                 throw new BadHttpRequestException($"Cannot update Person [{request.Id}], name '{request.Name}' already exists");
-            
+
             return Task.CompletedTask;
         }
     }

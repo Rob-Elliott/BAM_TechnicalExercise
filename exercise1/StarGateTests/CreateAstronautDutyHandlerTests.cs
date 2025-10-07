@@ -1,12 +1,5 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using StargateAPI.Business.Commands;
-using StargateAPI.Business.Data;
-using Xunit;
 
 namespace StarGateTests
 {

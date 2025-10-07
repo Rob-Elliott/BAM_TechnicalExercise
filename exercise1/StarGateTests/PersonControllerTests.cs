@@ -1,13 +1,11 @@
 using System.Net;
-using System.Threading;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using StargateAPI.Controllers;
-using StargateAPI.Business.Queries;
 using StargateAPI.Business.Commands;
-using Xunit;
+using StargateAPI.Business.Queries;
+using StargateAPI.Controllers;
 
 namespace StarGateTests
 {

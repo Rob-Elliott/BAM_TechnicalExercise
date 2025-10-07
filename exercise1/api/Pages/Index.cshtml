@@ -1,0 +1,69 @@
+@page
+@model IndexModel
+
+<h1>People (API Demo)</h1>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Create Person</h5>
+    <form id="createPersonForm" class="row g-2">
+      <div class="col-auto">
+        <input id="createPersonName" class="form-control" placeholder="Full name" />
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+      <div class="col-12">
+        <div id="createPersonAlert"></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr><th>Name</th><th>Rank</th><th>Duty</th></tr>
+  </thead>
+  <tbody>
+    @foreach(var p in Model.People)
+    {
+      <tr>
+        <td><a asp-page="/People/Details" asp-route-id="@p.PersonId">@p.Name</a></td>
+        <td>@p.CurrentRank</td>
+        <td>@p.CurrentDutyTitle</td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+<script>
+document.getElementById('createPersonForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const name = document.getElementById('createPersonName').value.trim();
+  const alertEl = document.getElementById('createPersonAlert');
+  alertEl.innerHTML = '';
+  if (!name) {
+    alertEl.innerHTML = '<div class="alert alert-warning">Name is required</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/Person', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(name)
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      alertEl.innerHTML = `<div class="alert alert-danger">${text}</div>`;
+      return;
+    }
+
+    alertEl.innerHTML = '<div class="alert alert-success">Person created successfully. Reloading...</div>';
+    setTimeout(() => location.reload(), 800);
+  } catch (err) {
+    alertEl.innerHTML = `<div class="alert alert-danger">${err}</div>`;
+  }
+});
+</script>

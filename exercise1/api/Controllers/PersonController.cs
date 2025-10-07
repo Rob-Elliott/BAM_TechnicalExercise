@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using System.Net;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using StargateAPI.Business.Commands;
 using StargateAPI.Business.Queries;
-using System.Net;
 
 namespace StargateAPI.Controllers
 {
@@ -22,7 +22,7 @@ namespace StargateAPI.Controllers
         {
             try
             {
-                var result = await _mediator.Send(new GetPeople(){});
+                var result = await _mediator.Send(new GetPeople() { });
 
                 return this.GetResponse(result);
             }

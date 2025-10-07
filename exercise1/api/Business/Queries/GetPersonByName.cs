@@ -1,6 +1,4 @@
-﻿using System;
-using Dapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
@@ -46,7 +44,7 @@ namespace StargateAPI.Business.Queries
             {
                 throw new BadHttpRequestException($"No Person with name '{request.Name}' exists");
             }
-            
+
             return result;
         }
     }

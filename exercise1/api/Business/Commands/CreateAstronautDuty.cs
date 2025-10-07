@@ -1,10 +1,8 @@
-﻿using Dapper;
-using MediatR;
+﻿using MediatR;
 using MediatR.Pipeline;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Controllers;
-using System.Net;
 
 namespace StargateAPI.Business.Commands
 {
@@ -71,7 +69,7 @@ namespace StargateAPI.Business.Commands
                 .Include(p => p.AstronautDetail)
                 .Include(p => p.AstronautDuties)
                 .FirstOrDefault(p => p.Name.ToLower() == request.Name.ToLower());
-            
+
             // if the person has no detail, that means they have no duty history. Add one.
             if (person.AstronautDetail == null)
             {
@@ -84,7 +82,7 @@ namespace StargateAPI.Business.Commands
                 if (request.DutyTitle.ToUpper() == "RETIRED")
                 {
                     person.AstronautDetail.CareerEndDate = request.DutyStartDate.Date;
-                }               
+                }
             }
             else
             {

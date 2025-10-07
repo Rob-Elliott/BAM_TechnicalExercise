@@ -1,0 +1,118 @@
+@page "{id:int}"
+@model DetailsModel
+
+<h1>Person Details (API Demo)</h1>
+
+<h2>@Model.Person?.Name</h2>
+
+<dl>
+  <dt>Current Rank</dt>
+  <dd>@Model.Person?.CurrentRank</dd>
+  <dt>Current Duty</dt>
+  <dd>@Model.Person?.CurrentDutyTitle</dd>
+  <dt>Career Start</dt>
+  <dd>@Model.Person?.CareerStartDate?.ToString("yyyy-MM-dd")</dd>
+  <dt>Career End</dt>
+  <dd>@Model.Person?.CareerEndDate?.ToString("yyyy-MM-dd")</dd>
+</dl>
+
+<h3>Duty History</h3>
+<table>
+  <thead><tr><th>Start</th><th>End</th><th>Rank</th><th>Title</th></tr></thead>
+  <tbody>
+    @foreach(var d in Model.Duties)
+    {
+      <tr>
+        <td>@d.DutyStartDate.ToString("yyyy-MM-dd")</td>
+        <td>@(d.DutyEndDate?.ToString("yyyy-MM-dd") ?? "")</td>
+        <td>@d.Rank</td>
+        <td>@d.DutyTitle</td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Update Person</h5>
+        <form id="updatePersonForm" class="row g-2">
+          <input type="hidden" id="personId" value="@Model.Person?.PersonId" />
+          <div class="col-12">
+            <input id="updatePersonName" class="form-control" value="@Model.Person?.Name" />
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+          <div class="col-12"><div id="updatePersonAlert"></div></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Add Duty</h5>
+        <form id="createDutyForm" class="row g-2">
+          <input type="hidden" id="dutyPersonName" value="@Model.Person?.Name" />
+          <div class="col-12">
+            <input id="dutyTitle" class="form-control" placeholder="Duty title (e.g. RETIRED)" />
+          </div>
+          <div class="col-6">
+            <input id="dutyRank" class="form-control" placeholder="Rank" />
+          </div>
+          <div class="col-6">
+            <input id="dutyStart" type="date" class="form-control" />
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Add Duty</button>
+          </div>
+          <div class="col-12"><div id="createDutyAlert"></div></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const updateForm = document.getElementById('updatePersonForm');
+  const updateAlert = document.getElementById('updatePersonAlert');
+  updateForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    updateAlert.innerHTML = '';
+    const id = parseInt(document.getElementById('personId').value, 10);
+    const name = document.getElementById('updatePersonName').value.trim();
+    if (!name) { updateAlert.innerHTML = '<div class="alert alert-warning">Name is required</div>'; return; }
+    try {
+      const payload = { id: id, name: name };
+      const res = await fetch('/api/Person', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { updateAlert.innerHTML = `<div class="alert alert-danger">${await res.text()}</div>`; return; }
+      updateAlert.innerHTML = '<div class="alert alert-success">Person updated. Reloading...</div>';
+      setTimeout(() => location.reload(), 700);
+    } catch(err) { updateAlert.innerHTML = `<div class="alert alert-danger">${err}</div>`; }
+  });
+
+  const dutyForm = document.getElementById('createDutyForm');
+  const dutyAlert = document.getElementById('createDutyAlert');
+  dutyForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    dutyAlert.innerHTML = '';
+    const name = document.getElementById('dutyPersonName').value;
+    const title = document.getElementById('dutyTitle').value.trim();
+    const rank = document.getElementById('dutyRank').value.trim();
+    const start = document.getElementById('dutyStart').value;
+    if (!title || !rank || !start) { dutyAlert.innerHTML = '<div class="alert alert-warning">All fields are required</div>'; return; }
+
+    try {
+      const payload = { name: name, rank: rank, dutyTitle: title, dutyStartDate: new Date(start) };
+      const res = await fetch('/api/AstronautDuty', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { dutyAlert.innerHTML = `<div class="alert alert-danger">${await res.text()}</div>`; return; }
+      dutyAlert.innerHTML = '<div class="alert alert-success">Duty added. Reloading...</div>';
+      setTimeout(() => location.reload(), 700);
+    } catch(err) { dutyAlert.innerHTML = `<div class="alert alert-danger">${err}</div>`; }
+  });
+})();
+</script>

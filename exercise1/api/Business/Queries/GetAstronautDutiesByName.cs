@@ -1,5 +1,4 @@
-﻿using Dapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
@@ -49,7 +48,7 @@ namespace StargateAPI.Business.Queries
             //var query = $"SELECT * FROM [AstronautDuty] WHERE {person.Id} = PersonId Order By DutyStartDate Desc";
             //var duties = await _context.Connection.QueryAsync<AstronautDuty>(query);
 
-            result.AstronautDuties = person.AstronautDuties.OrderByDescending(d => d.DutyStartDate).Select(d => { d.Person = null; return d;}).ToList();
+            result.AstronautDuties = person.AstronautDuties.OrderByDescending(d => d.DutyStartDate).Select(d => { d.Person = null; return d; }).ToList();
 
             return result;
         }

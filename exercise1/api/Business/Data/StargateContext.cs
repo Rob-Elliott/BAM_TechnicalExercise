@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Data;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace StargateAPI.Business.Data
 {
@@ -64,7 +64,7 @@ namespace StargateAPI.Business.Data
                         PersonId = 1,
                         CurrentRank = "1LT",
                         CurrentDutyTitle = "Commander",
-                        CareerStartDate = new DateTime(2020,02,03)
+                        CareerStartDate = new DateTime(2020, 02, 03)
                     },
                     new AstronautDetail
                     {

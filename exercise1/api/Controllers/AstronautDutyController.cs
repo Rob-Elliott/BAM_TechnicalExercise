@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using System.Net;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using StargateAPI.Business.Commands;
 using StargateAPI.Business.Queries;
-using System.Net;
 
 namespace StargateAPI.Controllers
 {
@@ -40,14 +40,14 @@ namespace StargateAPI.Controllers
                     Success = false,
                     ResponseCode = (int)HttpStatusCode.InternalServerError
                 });
-            }            
+            }
         }
 
         [HttpPost("")]
         public async Task<IActionResult> CreateAstronautDuty([FromBody] CreateAstronautDuty request)
         {
             var result = await _mediator.Send(request);
-            return this.GetResponse(result);           
+            return this.GetResponse(result);
         }
     }
 }
