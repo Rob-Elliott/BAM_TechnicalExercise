@@ -76,19 +76,19 @@ Examine the code, find and resolve any flaws, if any exist. Identify design patt
 1. A Person's Career End Date is one day before the Retired Duty Start Date.
 	// handled by CreateAstronautDutyHandler
 
-Assumptions:
-	Tried to keep the existing package versions
-	New AstronautDuty records always occur after the latest existing record (no adding Duty records out of chronological order)
-	No way to edit a Duty record
-	No way to remove any records
-	Name uniqueness is case-insensitive
+## Assumptions
+1. Tried to keep the existing package versions
+1. New AstronautDuty records always occur after the latest existing record (no adding Duty records out of chronological order)
+1. No way to edit a Duty record
+1. No way to remove any records
+1. Name uniqueness is case-insensitive
 	
-Disclaimers/Issues:
-	I could not figure out how StarGateContext.SeedData was supposed to be working, so I added it as an actual DB migration step.
-	I ignored nullability issues, this should be resolved in production code.
-	I ignored DateTime UTC vs Local issues, this should be resolved in production code.
-	Security was not considered.
-	Unit test coverage was not considered for demo website nor logging.
-	Demo website was largely written with AI and manually checked for accuracy.
-	Serilog logger used for logging to database, did not setup any filtering to exclude existing logging.
+## Disclaimers/Issues
+1. I could not figure out how StarGateContext.SeedData was supposed to be working, so I added it as an actual DB migration step.
+1. I ignored nullability issues, this should be resolved in production code.
+1. I ignored DateTime UTC vs Local issues, this should be resolved in production code.
+1. Security was not considered.
+1. Unit test coverage was not considered for demo website nor logging.
+1. Demo website was largely written with AI and manually checked for accuracy.
+1. Serilog logger used for logging to database, did not setup any filtering to exclude existing logging.
 	
