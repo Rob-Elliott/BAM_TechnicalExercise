@@ -6,6 +6,9 @@ using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Commands
 {
+    /// <summary>
+    /// Creates a Person record
+    /// </summary>
     public class CreatePerson : IRequest<CreatePersonResult>
     {
         public required string Name { get; set; } = string.Empty;
@@ -20,9 +23,10 @@ namespace StargateAPI.Business.Commands
         }
         public Task Process(CreatePerson request, CancellationToken cancellationToken)
         {
-            var person = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
+            var existingPerson = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
 
-            if (person is not null) throw new BadHttpRequestException("Bad Request");
+            if (existingPerson is not null)
+                throw new BadHttpRequestException($"Bad Request, person with name '{request.Name}' already exists");
 
             return Task.CompletedTask;
         }

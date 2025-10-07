@@ -6,7 +6,7 @@ using System.Net;
 
 namespace StargateAPI.Controllers
 {
-   
+
     [ApiController]
     [Route("[controller]")]
     public class PersonController : ControllerBase
@@ -22,12 +22,13 @@ namespace StargateAPI.Controllers
         {
             try
             {
-                var result = await _mediator.Send(new GetPeople()
-                {
-
-                });
+                var result = await _mediator.Send(new GetPeople(){});
 
                 return this.GetResponse(result);
+            }
+            catch (BadHttpRequestException ex)
+            {
+                return this.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -52,6 +53,10 @@ namespace StargateAPI.Controllers
 
                 return this.GetResponse(result);
             }
+            catch (BadHttpRequestException ex)
+            {
+                return this.BadRequest(ex.Message);
+            }
             catch (Exception ex)
             {
                 return this.GetResponse(new BaseResponse()
@@ -75,6 +80,10 @@ namespace StargateAPI.Controllers
 
                 return this.GetResponse(result);
             }
+            catch (BadHttpRequestException ex)
+            {
+                return this.BadRequest(ex.Message);
+            }
             catch (Exception ex)
             {
                 return this.GetResponse(new BaseResponse()
@@ -85,6 +94,29 @@ namespace StargateAPI.Controllers
                 });
             }
 
+        }
+
+        [HttpPut("")]
+        public async Task<IActionResult> UpdatePerson([FromBody] UpdatePerson request)
+        {
+            try
+            {
+                var result = await _mediator.Send(request);
+                return this.GetResponse(result);
+            }
+            catch (BadHttpRequestException ex)
+            {
+                return this.BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return this.GetResponse(new BaseResponse()
+                {
+                    Message = ex.Message,
+                    Success = false,
+                    ResponseCode = (int)HttpStatusCode.InternalServerError
+                });
+            }
         }
     }
 }

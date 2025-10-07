@@ -6,6 +6,9 @@ using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Queries
 {
+    /// <summary>
+    /// Retrieves all Person Records
+    /// </summary>
     public class GetPeople : IRequest<GetPeopleResult>
     {
 

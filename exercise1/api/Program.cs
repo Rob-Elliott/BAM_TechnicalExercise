@@ -13,8 +13,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<StargateContext>(options => 
     options.UseSqlite(builder.Configuration.GetConnectionString("StarbaseApiDatabase")));
 
+// All REST Validation (IRequestPreProcessors) need to be added here
 builder.Services.AddMediatR(cfg =>
 {
+    cfg.AddRequestPreProcessor<CreatePersonPreProcessor>();
+    cfg.AddRequestPreProcessor<UpdatePersonPreProcessor>();
     cfg.AddRequestPreProcessor<CreateAstronautDutyPreProcessor>();
     cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
 });

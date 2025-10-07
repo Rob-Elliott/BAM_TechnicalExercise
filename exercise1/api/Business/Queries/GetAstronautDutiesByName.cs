@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
 using StargateAPI.Controllers;
@@ -25,20 +26,29 @@ namespace StargateAPI.Business.Queries
 
             var result = new GetAstronautDutiesByNameResult();
 
-            var query = $"SELECT a.Id as PersonId, a.Name, b.CurrentRank, b.CurrentDutyTitle, b.CareerStartDate, b.CareerEndDate FROM [Person] a LEFT JOIN [AstronautDetail] b on b.PersonId = a.Id WHERE \'{request.Name}\' = a.Name";
+            var person = _context.People
+                    .Include(p => p.AstronautDetail)
+                    .Include(p => p.AstronautDuties)
+                    .FirstOrDefault(p => p.Name.ToLower() == request.Name.ToLower());
 
-            var person = await _context.Connection.QueryFirstOrDefaultAsync<PersonAstronaut>(query);
+            //var query = $"SELECT a.Id as PersonId, a.Name, b.CurrentRank, b.CurrentDutyTitle, b.CareerStartDate, b.CareerEndDate FROM [Person] a LEFT JOIN [AstronautDetail] b on b.PersonId = a.Id WHERE \'{request.Name}\' = a.Name";
+            //var person = await _context.Connection.QueryFirstOrDefaultAsync<PersonAstronaut>(query);
 
-            result.Person = person;
 
-            query = $"SELECT * FROM [AstronautDuty] WHERE {person.PersonId} = PersonId Order By DutyStartDate Desc";
+            // if no person was found
+            if (person == null)
+            {
+                throw new BadHttpRequestException($"No Person with name '{request.Name}' exists");
+            }
 
-            var duties = await _context.Connection.QueryAsync<AstronautDuty>(query);
+            result.Person = new PersonAstronaut(person, person.AstronautDetail);
 
-            result.AstronautDuties = duties.ToList();
+            //var query = $"SELECT * FROM [AstronautDuty] WHERE {person.Id} = PersonId Order By DutyStartDate Desc";
+            //var duties = await _context.Connection.QueryAsync<AstronautDuty>(query);
+
+            result.AstronautDuties = person.AstronautDuties.OrderByDescending(d => d.DutyStartDate).Select(d => { d.Person = null; return d;}).ToList();
 
             return result;
-
         }
     }
 

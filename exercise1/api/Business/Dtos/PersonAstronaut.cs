@@ -10,6 +10,8 @@ namespace StargateAPI.Business.Dtos
     [DebuggerDisplay("PersonAstronaut[{PersonId}] {Name}")]
     public class PersonAstronaut
     {
+        public PersonAstronaut() { }
+
         public PersonAstronaut(int personId, string name, string currentRank, string currentDutyTitle, DateTime? careerStartDate, DateTime? careerEndDate)
         {
             PersonId = personId;
@@ -21,7 +23,7 @@ namespace StargateAPI.Business.Dtos
         }
 
         public PersonAstronaut(Person person, AstronautDetail detail)
-            : this(person.Id, person.Name, detail.CurrentRank, detail.CurrentDutyTitle, detail.CareerStartDate, detail.CareerEndDate)
+            : this(person.Id, person.Name, detail?.CurrentRank, detail?.CurrentDutyTitle, detail?.CareerStartDate, detail?.CareerEndDate)
         { }
 
 

@@ -41,9 +41,7 @@ namespace StargateAPI.Business.Queries
             // if no person was found
             else
             {
-                result.Success = false;
-                result.ResponseCode = 404; 
-                result.Message = $"No Person with name '{request.Name}' exists.";
+                throw new BadHttpRequestException($"No Person with name '{request.Name}' exists");
             }
             
             return result;
