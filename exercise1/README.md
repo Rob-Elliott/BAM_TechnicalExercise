@@ -22,19 +22,27 @@ The People that exist in this system are not all Astronauts. ACTS maintains a ma
 The REST API is expected to do the following:
 
 1. Retrieve a person by name.
+	// handled by GetPersonByName
 1. Retrieve all people.
+	// handled by GetPeople
 1. Add/update a person by name.
+	// handled by CreatePerson/UpdatePerson
 1. Retrieve Astronaut Duty by name.
+	// handled by GetAstronautDutiesByName
 1. Add an Astronaut Duty.
+	// handled by CreateAstronautDuty
 
 ##### Implement a user interface: (Encouraged)
 
 The UI is expected to do the following:
 
 1. Successfully implement a web application that demonstrates production level quality. Angular is preferred.
+	// created basic ASP.NET Razor pages
 1. Implement call(s) to retrieve an individual's astronaut duties.
+	// Detail page created
 1. Display the progress of the process and the results in a visually sophisticated and appealing manner.
-
+	// no progress shown, but errors shown and successes displayed immediately.
+	
 ## Tasks
 
 Overview
@@ -55,9 +63,32 @@ Examine the code, find and resolve any flaws, if any exist. Identify design patt
 ## Rules
 
 1. A Person is uniquely identified by their Name.
+	// enforced by CreatePersonPreProcessor
 1. A Person who has not had an astronaut assignment will not have Astronaut records.
 1. A Person will only ever hold one current Astronaut Duty Title, Start Date, and Rank at a time.
+	// handled by CreateAstronautDuty
 1. A Person's Current Duty will not have a Duty End Date.
+	// enforced by CreateAstronautDutyPreProcessor
 1. A Person's Previous Duty End Date is set to the day before the New Astronaut Duty Start Date when a new Astronaut Duty is received for a Person.
+	// handled by CreateAstronautDutyHandler
 1. A Person is classified as 'Retired' when a Duty Title is 'RETIRED'.
+	// handled by CreateAstronautDutyHandler
 1. A Person's Career End Date is one day before the Retired Duty Start Date.
+	// handled by CreateAstronautDutyHandler
+
+Assumptions:
+	Tried to keep the existing package versions
+	New AstronautDuty records always occur after the latest existing record (no adding Duty records out of chronological order)
+	No way to edit a Duty record
+	No way to remove any records
+	Name uniqueness is case-insensitive
+	
+Disclaimers/Issues:
+	I could not figure out how StarGateContext.SeedData was supposed to be working, so I added it as an actual DB migration step.
+	I ignored nullability issues, this should be resolved in production code.
+	I ignored DateTime UTC vs Local issues, this should be resolved in production code.
+	Security was not considered.
+	Unit test coverage was not considered for demo website nor logging.
+	Demo website was largely written with AI and manually checked for accuracy.
+	Serilog logger used for logging to database, did not setup any filtering to exclude existing logging.
+	
