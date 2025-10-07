@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StargateAPI.Business.Data
 {
     [Table("Person")]
+    [DebuggerDisplay("Person[{Id}] {Name}")]
     public class Person
     {
         public int Id { get; set; }

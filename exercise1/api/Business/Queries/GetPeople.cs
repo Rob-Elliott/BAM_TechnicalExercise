@@ -18,6 +18,7 @@ namespace StargateAPI.Business.Queries
         {
             _context = context;
         }
+
         public async Task<GetPeopleResult> Handle(GetPeople request, CancellationToken cancellationToken)
         {
             var result = new GetPeopleResult();

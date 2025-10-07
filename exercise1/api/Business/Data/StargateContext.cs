@@ -17,11 +17,11 @@ namespace StargateAPI.Business.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(StargateContext).Assembly);
 
-            //SeedData(modelBuilder);
-
-            base.OnModelCreating(modelBuilder);
+            SeedData(modelBuilder);
         }
 
         private static void SeedData(ModelBuilder modelBuilder)
@@ -38,6 +38,21 @@ namespace StargateAPI.Business.Data
                     {
                         Id = 2,
                         Name = "Jane Doe"
+                    },
+                    new Person
+                    {
+                        Id = 3,
+                        Name = "John Young"
+                    },
+                    new Person
+                    {
+                        Id = 4,
+                        Name = "Michael Collins"
+                    },
+                    new Person
+                    {
+                        Id = 5,
+                        Name = "Virgil Grissom"
                     }
                 );
 
@@ -49,7 +64,33 @@ namespace StargateAPI.Business.Data
                         PersonId = 1,
                         CurrentRank = "1LT",
                         CurrentDutyTitle = "Commander",
-                        CareerStartDate = DateTime.Now
+                        CareerStartDate = new DateTime(2020,02,03)
+                    },
+                    new AstronautDetail
+                    {
+                        Id = 2,
+                        PersonId = 3,
+                        CurrentRank = "LCL",
+                        CurrentDutyTitle = "Commander",
+                        CareerStartDate = new DateTime(1969, 01, 01)
+                    },
+                    new AstronautDetail
+                    {
+                        Id = 3,
+                        PersonId = 4,
+                        CurrentRank = "CPT",
+                        CurrentDutyTitle = "RETIRED",
+                        CareerStartDate = new DateTime(1967, 01, 01),
+                        CareerEndDate = new DateTime(1969, 01, 02),
+                    },
+                    new AstronautDetail
+                    {
+                        Id = 4,
+                        PersonId = 5,
+                        CurrentRank = "1LT",
+                        CurrentDutyTitle = "RETIRED",
+                        CareerStartDate = new DateTime(1960, 01, 01),
+                        CareerEndDate = new DateTime(1966, 01, 02),
                     }
                 );
 
@@ -59,8 +100,88 @@ namespace StargateAPI.Business.Data
                     {
                         Id = 1,
                         PersonId = 1,
-                        DutyStartDate = DateTime.Now,
+                        DutyStartDate = new DateTime(2025, 04, 05),
                         DutyTitle = "Commander",
+                        Rank = "1LT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 2,
+                        PersonId = 3,
+                        DutyStartDate = new DateTime(1962, 01, 01),
+                        DutyEndDate = new DateTime(1966, 01, 01),
+                        DutyTitle = "Pilot",
+                        Rank = "1LT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 3,
+                        PersonId = 3,
+                        DutyStartDate = new DateTime(1966, 01, 02),
+                        DutyEndDate = new DateTime(1967, 01, 01),
+                        DutyTitle = "Command Pilot",
+                        Rank = "CPT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 4,
+                        PersonId = 3,
+                        DutyStartDate = new DateTime(1967, 01, 02),
+                        DutyEndDate = new DateTime(1969, 01, 01),
+                        DutyTitle = "Command Module Pilot",
+                        Rank = "MAJ"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 5,
+                        PersonId = 3,
+                        DutyStartDate = new DateTime(1969, 01, 02),
+                        DutyEndDate = new DateTime(1983, 01, 01),
+                        DutyTitle = "Commander",
+                        Rank = "LCL"
+                    },
+
+                    new AstronautDuty
+                    {
+                        Id = 6,
+                        PersonId = 4,
+                        DutyStartDate = new DateTime(1962, 01, 01),
+                        DutyEndDate = new DateTime(1967, 01, 01),
+                        DutyTitle = "Pilot",
+                        Rank = "1LT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 7,
+                        PersonId = 4,
+                        DutyStartDate = new DateTime(1967, 01, 02),
+                        DutyEndDate = new DateTime(1969, 01, 01),
+                        DutyTitle = "Command Module Pilot",
+                        Rank = "CPT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 8,
+                        PersonId = 5,
+                        DutyStartDate = new DateTime(1960, 01, 02),
+                        DutyEndDate = new DateTime(1966, 01, 01),
+                        DutyTitle = "Command Pilot",
+                        Rank = "1LT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 9,
+                        PersonId = 4,
+                        DutyStartDate = new DateTime(1969, 01, 02),
+                        DutyTitle = "RETIRED",
+                        Rank = "CPT"
+                    },
+                    new AstronautDuty
+                    {
+                        Id = 10,
+                        PersonId = 5,
+                        DutyStartDate = new DateTime(1966, 01, 02),
+                        DutyTitle = "RETIRED",
                         Rank = "1LT"
                     }
                 );
