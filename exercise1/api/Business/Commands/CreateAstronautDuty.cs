@@ -124,7 +124,7 @@ namespace StargateAPI.Business.Commands
             person.AstronautDuties.Add(newAstronautDuty);
 
             _context.Update(person);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new CreateAstronautDutyResult()
             {

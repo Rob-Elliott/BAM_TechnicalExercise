@@ -7,6 +7,9 @@ using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Queries
 {
+    /// <summary>
+    /// Retrieves a specific Person and related AstronautDuties
+    /// </summary>
     public class GetAstronautDutiesByName : IRequest<GetAstronautDutiesByNameResult>
     {
         public string Name { get; set; } = string.Empty;
