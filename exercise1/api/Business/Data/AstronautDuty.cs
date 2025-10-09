@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using StargateAPI.Business.Repositories;
 
 namespace StargateAPI.Business.Data
 {
@@ -10,7 +11,7 @@ namespace StargateAPI.Business.Data
     /// </summary>
     [Table("AstronautDuty")]
     [DebuggerDisplay("AstronautDuty[{Id}] [{PersonId}] {Rank}")]
-    public class AstronautDuty
+    public class AstronautDuty : IBaseEntity
     {
         public int Id { get; set; }
 

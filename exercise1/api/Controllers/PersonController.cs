@@ -20,7 +20,7 @@ namespace StargateAPI.Controllers
             _logger = logger;
         }
 
-        [HttpGet("")]
+        [HttpGet("")] // GET /api/People 
         public async Task<IActionResult> GetPeople()
         {
             try

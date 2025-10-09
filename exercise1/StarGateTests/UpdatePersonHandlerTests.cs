@@ -1,5 +1,11 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Moq;
+using Xunit;
 using StargateAPI.Business.Commands;
+using StargateAPI.Business.Repositories;
+using StargateAPI.Business.Data;
 
 namespace StarGateTests
 {
@@ -8,9 +14,10 @@ namespace StarGateTests
         [Fact]
         public async Task Preprocessor_Throws_WhenPersonNotFound()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var mockRepo = new Mock<IPersonRepository>();
+            mockRepo.Setup(r => r.GetByIdAsync(9999)).ReturnsAsync((Person?)null);
 
-            var pre = new UpdatePersonPreProcessor(ctx);
+            var pre = new UpdatePersonPreProcessor(mockRepo.Object);
 
             var req = new UpdatePerson { Id = 9999, Name = "No One" };
 
@@ -20,11 +27,15 @@ namespace StarGateTests
         [Fact]
         public async Task Preprocessor_Throws_WhenDuplicateNameExists()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var mockRepo = new Mock<IPersonRepository>();
 
-            var pre = new UpdatePersonPreProcessor(ctx);
+            // existing person (id=1)
+            mockRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Person { Id = 1, Name = "John Doe" });
+            // duplicate name exists (Jane Doe)
+            mockRepo.Setup(r => r.GetPersonByNameAsync("Jane Doe")).ReturnsAsync(new Person { Id = 2, Name = "Jane Doe" });
 
-            // Seed contains John Doe (Id=1) and Jane Doe (Id=2)
+            var pre = new UpdatePersonPreProcessor(mockRepo.Object);
+
             var req = new UpdatePerson { Id = 1, Name = "Jane Doe" };
 
             await Assert.ThrowsAsync<BadHttpRequestException>(() => pre.Process(req, CancellationToken.None));
@@ -33,9 +44,11 @@ namespace StarGateTests
         [Fact]
         public async Task Handler_Throws_WhenPersonNotFound()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var mockRepo = new Mock<IPersonRepository>();
+            // configure GetByIdAsync to throw the same BadHttpRequestException the original preprocessor would
+            mockRepo.Setup(r => r.GetByIdAsync(9999)).ThrowsAsync(new BadHttpRequestException("Person [9999] not found"));
 
-            var handler = new UpdatePersonHandler(ctx);
+            var handler = new UpdatePersonHandler(mockRepo.Object);
 
             var req = new UpdatePerson { Id = 9999, Name = "Nobody" };
 

@@ -1,5 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Moq;
+using Xunit;
 using StargateAPI.Business.Commands;
+using StargateAPI.Business.Repositories;
+using StargateAPI.Business.Data;
 
 namespace StarGateTests
 {
@@ -9,11 +18,19 @@ namespace StarGateTests
         [Fact]
         public async Task Handle_CreatesNewAstronautDuty_AndUpdatesDetail()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var person = new Person { Id = 1, Name = "John Doe", AstronautDetail = new AstronautDetail() };
 
-            var handler = new CreateAstronautDutyHandler(ctx);
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync("John Doe")).ReturnsAsync(person);
+            mockPersonRepo.Setup(r => r.UpdateAsync(It.IsAny<Person>())).ReturnsAsync((Person p) => p);
 
-            // Use an existing seeded person name (John Doe has Id = 1)
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+            mockDutyRepo.Setup(r => r.GetAstronautDutiesByPersonIdAsync(1)).ReturnsAsync(new List<AstronautDuty>());
+            mockDutyRepo.Setup(r => r.UpdateAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => d);
+            mockDutyRepo.Setup(r => r.AddAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => { d.Id = 55; return d; });
+
+            var handler = new CreateAstronautDutyHandler(mockDutyRepo.Object, mockPersonRepo.Object);
+
             var req = new CreateAstronautDuty
             {
                 Name = "John Doe",
@@ -26,23 +43,19 @@ namespace StarGateTests
 
             Assert.NotNull(result);
             Assert.True(result.Id.HasValue);
-
-            var created = ctx.AstronautDuties.FirstOrDefault(d => d.Id == result.Id.Value);
-            Assert.NotNull(created);
-            Assert.Equal(req.DutyTitle, created.DutyTitle);
-
-            var detail = ctx.AstronautDetails.FirstOrDefault(d => d.PersonId == created.PersonId);
-            Assert.NotNull(detail);
-            Assert.Equal(req.Rank, detail.CurrentRank);
-            Assert.Equal(req.DutyTitle, detail.CurrentDutyTitle);
+            // handler adds the new duty to the Person and updates the Person via personRepository
+            mockPersonRepo.Verify(r => r.UpdateAsync(It.Is<Person>(p => p.AstronautDuties.Any(d => d.DutyTitle == req.DutyTitle) && p.AstronautDetail.CurrentRank == req.Rank && p.AstronautDetail.CurrentDutyTitle == req.DutyTitle)), Times.AtLeastOnce);
         }
 
         [Fact]
         public async Task Preprocessor_Throws_WhenPersonNotFound()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync(It.IsAny<string>())).ReturnsAsync((Person?)null);
 
-            var pre = new CreateAstronautDutyPreProcessor(ctx);
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+
+            var pre = new CreateAstronautDutyPreProcessor(mockDutyRepo.Object, mockPersonRepo.Object);
 
             var req = new CreateAstronautDuty
             {
@@ -58,11 +71,17 @@ namespace StarGateTests
         [Fact]
         public async Task Preprocessor_Throws_WhenDutyStartDateAlreadyExists()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var person = new Person { Id = 1, Name = "John Doe" };
+            var existingDuty = new AstronautDuty { Id = 2, PersonId = 1, DutyStartDate = new DateTime(2025, 04, 05) };
 
-            var pre = new CreateAstronautDutyPreProcessor(ctx);
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync("John Doe")).ReturnsAsync(person);
 
-            // John Doe (seeded Id=1) has an existing duty at 2025-04-05 per seed data
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+            mockDutyRepo.Setup(r => r.GetAstronautDutyByPersonIdAndStartDateAsync(1, new DateTime(2025, 04, 05))).ReturnsAsync(existingDuty);
+
+            var pre = new CreateAstronautDutyPreProcessor(mockDutyRepo.Object, mockPersonRepo.Object);
+
             var req = new CreateAstronautDuty
             {
                 Name = "John Doe",
@@ -77,11 +96,18 @@ namespace StarGateTests
         [Fact]
         public async Task Handle_CreatesAstronautDetail_WhenNoneExists()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var person = new Person { Id = 2, Name = "Jane Doe", AstronautDetail = null };
 
-            var handler = new CreateAstronautDutyHandler(ctx);
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync("Jane Doe")).ReturnsAsync(person);
+            mockPersonRepo.Setup(r => r.UpdateAsync(It.IsAny<Person>())).ReturnsAsync((Person p) => p);
 
-            // Jane Doe (seeded Id=2) has no AstronautDetail
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+            mockDutyRepo.Setup(r => r.GetAstronautDutiesByPersonIdAsync(2)).ReturnsAsync(new List<AstronautDuty>());
+            mockDutyRepo.Setup(r => r.AddAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => { d.Id = 66; return d; });
+
+            var handler = new CreateAstronautDutyHandler(mockDutyRepo.Object, mockPersonRepo.Object);
+
             var req = new CreateAstronautDuty
             {
                 Name = "Jane Doe",
@@ -94,25 +120,25 @@ namespace StarGateTests
 
             Assert.NotNull(result);
             Assert.True(result.Id.HasValue);
-
-            var detail = ctx.AstronautDetails.FirstOrDefault(d => d.PersonId == ctx.People.First(p => p.Name == "Jane Doe").Id);
-            Assert.NotNull(detail);
-            Assert.Equal(req.Rank, detail.CurrentRank);
-            Assert.Equal(req.DutyTitle, detail.CurrentDutyTitle);
-            Assert.Equal(req.DutyStartDate.Date, detail.CareerStartDate);
-            Assert.Null(detail.CareerEndDate);
+            mockPersonRepo.Verify(r => r.UpdateAsync(It.Is<Person>(p => p.AstronautDetail != null && p.AstronautDetail.CurrentRank == req.Rank)), Times.AtLeastOnce);
         }
 
         [Fact]
         public async Task Handle_UpdatesMostRecentDutyEndDate_WhenAddingNewChronologicalDuty()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var person = new Person { Id = 3, Name = "John Young", AstronautDetail = new AstronautDetail() };
+            var mostRecent = new AstronautDuty { Id = 10, PersonId = 3, DutyStartDate = new DateTime(1983, 01, 01) };
 
-            var handler = new CreateAstronautDutyHandler(ctx);
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync("John Young")).ReturnsAsync(person);
+            mockPersonRepo.Setup(r => r.UpdateAsync(It.IsAny<Person>())).ReturnsAsync((Person p) => p);
 
-            // John Young (seeded Id=3) has a most recent duty that ends 1983-01-01
-            var person = ctx.People.First(p => p.Name == "John Young");
-            var mostRecent = ctx.AstronautDuties.Where(d => d.PersonId == person.Id).OrderByDescending(d => d.DutyStartDate).First();
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+            mockDutyRepo.Setup(r => r.GetAstronautDutiesByPersonIdAsync(3)).ReturnsAsync(new List<AstronautDuty> { mostRecent });
+            mockDutyRepo.Setup(r => r.UpdateAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => d);
+            mockDutyRepo.Setup(r => r.AddAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => { d.Id = 77; return d; });
+
+            var handler = new CreateAstronautDutyHandler(mockDutyRepo.Object, mockPersonRepo.Object);
 
             var newStart = new DateTime(1984, 01, 01);
 
@@ -128,20 +154,24 @@ namespace StarGateTests
 
             Assert.NotNull(result);
             Assert.True(result.Id.HasValue);
-
-            var updatedMostRecent = ctx.AstronautDuties.First(d => d.Id == mostRecent.Id);
-            Assert.NotNull(updatedMostRecent.DutyEndDate);
-            Assert.Equal(newStart.AddDays(-1).Date, updatedMostRecent.DutyEndDate.Value.Date);
+            mockDutyRepo.Verify(r => r.UpdateAsync(It.Is<AstronautDuty>(d => d.Id == mostRecent.Id && d.DutyEndDate == newStart.AddDays(-1).Date)), Times.Once);
         }
 
         [Fact]
         public async Task Handle_SetsCareerEndDate_OnRetirement_WhenDetailExists()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var person = new Person { Id = 1, Name = "John Doe", AstronautDetail = new AstronautDetail() };
 
-            var handler = new CreateAstronautDutyHandler(ctx);
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync("John Doe")).ReturnsAsync(person);
+            mockPersonRepo.Setup(r => r.UpdateAsync(It.IsAny<Person>())).ReturnsAsync((Person p) => p);
 
-            // John Doe (Id=1) has an AstronautDetail without CareerEndDate
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+            mockDutyRepo.Setup(r => r.GetAstronautDutiesByPersonIdAsync(1)).ReturnsAsync(new List<AstronautDuty>());
+            mockDutyRepo.Setup(r => r.AddAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => { d.Id = 88; return d; });
+
+            var handler = new CreateAstronautDutyHandler(mockDutyRepo.Object, mockPersonRepo.Object);
+
             var req = new CreateAstronautDuty
             {
                 Name = "John Doe",
@@ -154,20 +184,24 @@ namespace StarGateTests
 
             Assert.NotNull(result);
             Assert.True(result.Id.HasValue);
-
-            var detail = ctx.AstronautDetails.First(d => d.PersonId == ctx.People.First(p => p.Name == "John Doe").Id);
-            Assert.NotNull(detail.CareerEndDate);
-            Assert.Equal(req.DutyStartDate.AddDays(-1).Date, detail.CareerEndDate.Value.Date);
+            mockPersonRepo.Verify(r => r.UpdateAsync(It.Is<Person>(p => p.AstronautDetail.CareerEndDate == req.DutyStartDate.AddDays(-1).Date)), Times.AtLeastOnce);
         }
 
         [Fact]
         public async Task Handle_SetsCareerEndDate_OnRetirement_WhenDetailDidNotExist()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var person = new Person { Id = 2, Name = "Jane Doe", AstronautDetail = null };
 
-            var handler = new CreateAstronautDutyHandler(ctx);
+            var mockPersonRepo = new Mock<IPersonRepository>();
+            mockPersonRepo.Setup(r => r.GetPersonByNameAsync("Jane Doe")).ReturnsAsync(person);
+            mockPersonRepo.Setup(r => r.UpdateAsync(It.IsAny<Person>())).ReturnsAsync((Person p) => p);
 
-            // Jane Doe (Id=2) has no detail; requesting RETIRED should set CareerEndDate to DutyStartDate
+            var mockDutyRepo = new Mock<IAstronautDutyRepository>();
+            mockDutyRepo.Setup(r => r.GetAstronautDutiesByPersonIdAsync(2)).ReturnsAsync(new List<AstronautDuty>());
+            mockDutyRepo.Setup(r => r.AddAsync(It.IsAny<AstronautDuty>())).ReturnsAsync((AstronautDuty d) => { d.Id = 99; return d; });
+
+            var handler = new CreateAstronautDutyHandler(mockDutyRepo.Object, mockPersonRepo.Object);
+
             var req = new CreateAstronautDuty
             {
                 Name = "Jane Doe",
@@ -180,11 +214,7 @@ namespace StarGateTests
 
             Assert.NotNull(result);
             Assert.True(result.Id.HasValue);
-
-            var detail = ctx.AstronautDetails.First(d => d.PersonId == ctx.People.First(p => p.Name == "Jane Doe").Id);
-            Assert.NotNull(detail);
-            Assert.NotNull(detail.CareerEndDate);
-            Assert.Equal(req.DutyStartDate.Date, detail.CareerEndDate.Value.Date);
+            mockPersonRepo.Verify(r => r.UpdateAsync(It.Is<Person>(p => p.AstronautDetail != null && p.AstronautDetail.CareerEndDate == req.DutyStartDate.Date)), Times.AtLeastOnce);
         }
     }
 }

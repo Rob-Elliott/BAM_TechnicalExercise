@@ -2,6 +2,7 @@
 using MediatR.Pipeline;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
+using StargateAPI.Business.Repositories;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Commands
@@ -14,16 +15,13 @@ namespace StargateAPI.Business.Commands
         public required string Name { get; set; } = string.Empty;
     }
 
-    public class CreatePersonPreProcessor : IRequestPreProcessor<CreatePerson>
+    public class CreatePersonPreProcessor(IPersonRepository repository)
+        : IRequestPreProcessor<CreatePerson>
     {
-        private readonly StargateContext _context;
-        public CreatePersonPreProcessor(StargateContext context)
-        {
-            _context = context;
-        }
+
         public Task Process(CreatePerson request, CancellationToken cancellationToken)
         {
-            var existingPerson = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
+            var existingPerson = repository.GetPersonByNameAsync(request.Name);
 
             if (existingPerson is not null)
                 throw new BadHttpRequestException($"Bad Request, person with name '{request.Name}' already exists");
@@ -32,14 +30,9 @@ namespace StargateAPI.Business.Commands
         }
     }
 
-    public class CreatePersonHandler : IRequestHandler<CreatePerson, CreatePersonResult>
+    public class CreatePersonHandler(IPersonRepository repository)
+        : IRequestHandler<CreatePerson, CreatePersonResult>
     {
-        private readonly StargateContext _context;
-
-        public CreatePersonHandler(StargateContext context)
-        {
-            _context = context;
-        }
         public async Task<CreatePersonResult> Handle(CreatePerson request, CancellationToken cancellationToken)
         {
             var newPerson = new Person()
@@ -47,9 +40,7 @@ namespace StargateAPI.Business.Commands
                 Name = request.Name
             };
 
-            await _context.People.AddAsync(newPerson, cancellationToken);
-
-            await _context.SaveChangesAsync(cancellationToken);
+            newPerson = await repository.AddAsync(newPerson);
 
             return new CreatePersonResult()
             {

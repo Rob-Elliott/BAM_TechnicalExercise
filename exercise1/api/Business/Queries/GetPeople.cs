@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
+using StargateAPI.Business.Repositories;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Queries
@@ -9,28 +10,20 @@ namespace StargateAPI.Business.Queries
     /// <summary>
     /// Retrieves all Persons and related AstronautDetails
     /// </summary>
-    public class GetPeople : IRequest<GetPeopleResult>
+    public class GetPeople
+        : IRequest<GetPeopleResult>
+    { }
+
+    public class GetPeopleHandler(IPersonRepository repository)
+        : IRequestHandler<GetPeople, GetPeopleResult>
     {
-
-    }
-
-    public class GetPeopleHandler : IRequestHandler<GetPeople, GetPeopleResult>
-    {
-        public readonly StargateContext _context;
-        public GetPeopleHandler(StargateContext context)
-        {
-            _context = context;
-        }
-
         public async Task<GetPeopleResult> Handle(GetPeople request, CancellationToken cancellationToken)
         {
             var result = new GetPeopleResult();
 
-            var people = _context.People
-                .Include(p => p.AstronautDetail)
-                .Select(p => new PersonAstronaut(p, p.AstronautDetail));
-
-            result.People = await people.ToListAsync();
+            result.People = (await repository.GetAllAsync())
+                .Select(p => new PersonAstronaut(p, p.AstronautDetail))
+                .ToList();
 
             return result;
         }

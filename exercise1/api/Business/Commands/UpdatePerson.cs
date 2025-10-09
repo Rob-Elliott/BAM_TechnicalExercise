@@ -2,6 +2,7 @@ using MediatR;
 using MediatR.Pipeline;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
+using StargateAPI.Business.Repositories;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Commands
@@ -9,52 +10,42 @@ namespace StargateAPI.Business.Commands
     /// <summary>
     /// Updates an existing person record
     /// </summary>
-    public class UpdatePerson : IRequest<UpdatePersonResult>
+    public class UpdatePerson
+        : IRequest<UpdatePersonResult>
     {
         public required int Id { get; set; }
         public required string Name { get; set; } = string.Empty;
     }
 
-    public class UpdatePersonPreProcessor : IRequestPreProcessor<UpdatePerson>
+    public class UpdatePersonPreProcessor(IPersonRepository repository)
+        : IRequestPreProcessor<UpdatePerson>
     {
-        private readonly StargateContext _context;
-        public UpdatePersonPreProcessor(StargateContext context)
+
+        public async Task Process(UpdatePerson request, CancellationToken cancellationToken)
         {
-            _context = context;
-        }
-        public Task Process(UpdatePerson request, CancellationToken cancellationToken)
-        {
-            var person = _context.People.AsNoTracking()
-                .FirstOrDefault(z => z.Id == request.Id);
+            var person = await repository.GetByIdAsync(request.Id);
 
             if (person is null)
                 throw new BadHttpRequestException($"Person [{request.Id}] not found");
 
             // don't allow changing the name to an existing name
-            var duplicate = _context.People.AsNoTracking()
-                .FirstOrDefault(z => z.Name.ToLower() == request.Name.ToLower() && z.Id != request.Id);
+            var duplicate = await repository.GetPersonByNameAsync(request.Name);
 
             if (duplicate is not null)
                 throw new BadHttpRequestException($"Cannot update Person [{request.Id}], name '{request.Name}' already exists");
-
-            return Task.CompletedTask;
         }
     }
 
-    public class UpdatePersonHandler : IRequestHandler<UpdatePerson, UpdatePersonResult>
+    public class UpdatePersonHandler(IPersonRepository repository)
+        : IRequestHandler<UpdatePerson, UpdatePersonResult>
     {
-        private readonly StargateContext _context;
-        public UpdatePersonHandler(StargateContext context)
-        {
-            _context = context;
-        }
+
         public async Task<UpdatePersonResult> Handle(UpdatePerson request, CancellationToken cancellationToken)
         {
-            var person = await _context.People.FirstOrDefaultAsync(z => z.Id == request.Id, cancellationToken);
-            if (person == null) throw new BadHttpRequestException("Person not found");
+            var person = await repository.GetByIdAsync(request.Id);
+
             person.Name = request.Name;
-            _context.People.Update(person);
-            await _context.SaveChangesAsync(cancellationToken);
+            person = await repository.UpdateAsync(person);
             return new UpdatePersonResult()
             {
                 Id = person.Id

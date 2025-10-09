@@ -3,6 +3,7 @@ using Serilog;
 using StargateAPI;
 using StargateAPI.Business.Commands;
 using StargateAPI.Business.Data;
+using StargateAPI.Business.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,11 @@ builder.Services.AddMediatR(cfg =>
     cfg.AddRequestPreProcessor<CreateAstronautDutyPreProcessor>();
     cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
 });
+//builder.Services.AddMediatR(typeof(MyCommandHandler).Assembly);
+
+//builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
+builder.Services.AddScoped<IAstronautDutyRepository, AstronautDutyRepository>();
 
 var approot = builder.Configuration.GetValue<string>(WebHostDefaults.ContentRootKey);
 var dbPath = Path.Combine(approot, "starbase.db");

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
+using StargateAPI.Business.Repositories;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Queries
@@ -14,21 +15,14 @@ namespace StargateAPI.Business.Queries
         public required string Name { get; set; } = string.Empty;
     }
 
-    public class GetPersonByNameHandler : IRequestHandler<GetPersonByName, GetPersonByNameResult>
+    public class GetPersonByNameHandler(IPersonRepository repository)
+        : IRequestHandler<GetPersonByName, GetPersonByNameResult>
     {
-        private readonly StargateContext _context;
-        public GetPersonByNameHandler(StargateContext context)
-        {
-            _context = context;
-        }
-
         public async Task<GetPersonByNameResult> Handle(GetPersonByName request, CancellationToken cancellationToken)
         {
             var result = new GetPersonByNameResult();
 
-            var person = _context.People
-                .Include(p => p.AstronautDetail)
-                .FirstOrDefault(p => p.Name.ToLower() == request.Name.ToLower());
+            var person = await repository.GetPersonByNameAsync(request.Name);
 
             // if a person was found by name
             if (person != null)

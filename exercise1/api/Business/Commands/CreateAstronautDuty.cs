@@ -2,6 +2,7 @@
 using MediatR.Pipeline;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
+using StargateAPI.Business.Repositories;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Commands
@@ -9,7 +10,8 @@ namespace StargateAPI.Business.Commands
     /// <summary>
     /// Creates an AstronautDuty for an existing person, updates previous duty
     /// </summary>
-    public class CreateAstronautDuty : IRequest<CreateAstronautDutyResult>
+    public class CreateAstronautDuty
+        : IRequest<CreateAstronautDutyResult>
     {
         public required string Name { get; set; }
 
@@ -20,55 +22,37 @@ namespace StargateAPI.Business.Commands
         public DateTime DutyStartDate { get; set; }
     }
 
-    public class CreateAstronautDutyPreProcessor : IRequestPreProcessor<CreateAstronautDuty>
+    public class CreateAstronautDutyPreProcessor(IAstronautDutyRepository repository, IPersonRepository personRepository)
+        : IRequestPreProcessor<CreateAstronautDuty>
     {
-        private readonly StargateContext _context;
-
-        public CreateAstronautDutyPreProcessor(StargateContext context)
+        public async Task Process(CreateAstronautDuty request, CancellationToken cancellationToken)
         {
-            _context = context;
-        }
-
-        public Task Process(CreateAstronautDuty request, CancellationToken cancellationToken)
-        {
-            //var person = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
-            var person = _context.People
-                .Include(p => p.AstronautDetail)
-                .Include(p => p.AstronautDuties)
-                .FirstOrDefault(p => p.Name.ToLower() == request.Name.ToLower());
+            var person = await personRepository.GetPersonByNameAsync(request.Name);
 
             if (person is null)
-                throw new BadHttpRequestException($"Person '{request.Name}' not found");
+                throw new BadHttpRequestException($"Bad Request, person '{request.Name}' not found");
 
             // make sure we don't have an existing startdate for this person
-            var existingDuty = person.AstronautDuties.FirstOrDefault(z => z.DutyStartDate == request.DutyStartDate);
+            var existingDuty = repository.GetAstronautDutyByPersonIdAndStartDateAsync(person.Id, request.DutyStartDate);
 
             if (existingDuty is not null)
                 throw new BadHttpRequestException($"Bad Request, Duty for '{request.Name}' and start date {request.DutyStartDate} already exists");
-
-            return Task.CompletedTask;
         }
     }
 
-    public class CreateAstronautDutyHandler : IRequestHandler<CreateAstronautDuty, CreateAstronautDutyResult>
+    public class CreateAstronautDutyHandler(IAstronautDutyRepository repository, IPersonRepository personRepository)
+        : IRequestHandler<CreateAstronautDuty, CreateAstronautDutyResult>
     {
-        private readonly StargateContext _context;
-
-        public CreateAstronautDutyHandler(StargateContext context)
-        {
-            _context = context;
-        }
         public async Task<CreateAstronautDutyResult> Handle(CreateAstronautDuty request, CancellationToken cancellationToken)
         {
-            var person = _context.People
-                .Include(p => p.AstronautDetail)
-                .Include(p => p.AstronautDuties)
-                .FirstOrDefault(p => p.Name.ToLower() == request.Name.ToLower());
+            var person = await personRepository.GetPersonByNameAsync(request.Name);
+
+            if (person is null)
+                throw new BadHttpRequestException($"Bad Request, person '{request.Name}' not found");
 
             // if the person has no detail, that means they have no duty history. Add one.
             if (person.AstronautDetail == null)
             {
-
                 person.AstronautDetail = new AstronautDetail();
                 person.AstronautDetail.PersonId = person.Id;
                 person.AstronautDetail.CurrentDutyTitle = request.DutyTitle;
@@ -89,17 +73,17 @@ namespace StargateAPI.Business.Commands
                 }
             }
 
-            _context.Update(person); // probably not necessary, called again below
+            await personRepository.UpdateAsync(person); // probably not necessary, called again below
 
             // we are assuming the new Duty is chronologically after the most recent Duty in the DB.
             // update most recent Duty End Date.
 
-            var mostRecentDuty = person.AstronautDuties.OrderByDescending(d => d.DutyStartDate).FirstOrDefault();
+            var mostRecentDuty = (await repository.GetAstronautDutiesByPersonIdAsync(person.Id)).FirstOrDefault();
 
             if (mostRecentDuty is not null)
             {
                 mostRecentDuty.DutyEndDate = request.DutyStartDate.AddDays(-1).Date;
-                _context.Update(mostRecentDuty);
+                await repository.UpdateAsync(mostRecentDuty);
             }
 
             var newAstronautDuty = new AstronautDuty()
@@ -113,8 +97,7 @@ namespace StargateAPI.Business.Commands
 
             person.AstronautDuties.Add(newAstronautDuty);
 
-            _context.Update(person);
-            await _context.SaveChangesAsync(cancellationToken);
+            await personRepository.UpdateAsync(person);
 
             return new CreateAstronautDutyResult()
             {

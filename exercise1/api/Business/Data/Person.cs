@@ -2,12 +2,13 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using StargateAPI.Business.Repositories;
 
 namespace StargateAPI.Business.Data
 {
     [Table("Person")]
     [DebuggerDisplay("Person[{Id}] {Name}")]
-    public class Person
+    public class Person : IBaseEntity
     {
         public int Id { get; set; }
 
@@ -16,7 +17,6 @@ namespace StargateAPI.Business.Data
         public virtual AstronautDetail? AstronautDetail { get; set; }
 
         public virtual ICollection<AstronautDuty> AstronautDuties { get; set; } = new HashSet<AstronautDuty>();
-
     }
 
     public class PersonConfiguration : IEntityTypeConfiguration<Person>

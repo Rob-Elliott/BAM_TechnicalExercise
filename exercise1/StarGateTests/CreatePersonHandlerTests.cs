@@ -1,18 +1,32 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Moq;
+using Xunit;
 using StargateAPI.Business.Commands;
+using StargateAPI.Business.Repositories;
+using StargateAPI.Business.Data;
 
 namespace StarGateTests
 {
     public class CreatePersonHandlerTests
     {
-
-
         [Fact]
         public async Task Handle_CreatesNewPerson_AndReturnsId()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var mockRepo = new Mock<IPersonRepository>();
 
-            var handler = new CreatePersonHandler(ctx);
+            mockRepo.Setup(r => r.AddAsync(It.IsAny<Person>()))
+                .ReturnsAsync((Person p) =>
+                {
+                    // simulate DB assigning an Id
+                    p.Id = 1234;
+                    return p;
+                });
+
+            var handler = new CreatePersonHandler(mockRepo.Object);
 
             var uniqueName = "Person_" + Guid.NewGuid().ToString();
 
@@ -23,17 +37,19 @@ namespace StarGateTests
             Assert.NotNull(result);
             Assert.True(result.Id > 0);
 
-            var created = ctx.People.FirstOrDefault(p => p.Id == result.Id);
-            Assert.NotNull(created);
-            Assert.Equal(uniqueName, created.Name);
+            mockRepo.Verify(r => r.AddAsync(It.Is<Person>(p => p.Name == uniqueName)), Times.Once);
         }
 
         [Fact]
         public async Task Preprocessor_Throws_WhenPersonAlreadyExists()
         {
-            var ctx = TestDbFactory.CreateSqliteInMemoryContext();
+            var mockRepo = new Mock<IPersonRepository>();
 
-            var pre = new CreatePersonPreProcessor(ctx);
+            // simulate existing person returned for "John Doe"
+            mockRepo.Setup(r => r.GetPersonByNameAsync("John Doe"))
+                .ReturnsAsync(new Person { Id = 1, Name = "John Doe" });
+
+            var pre = new CreatePersonPreProcessor(mockRepo.Object);
 
             // Seed includes "John Doe"
             var req = new CreatePerson { Name = "John Doe" };
