@@ -33,7 +33,7 @@ namespace StargateAPI.Business.Commands
                 throw new BadHttpRequestException($"Bad Request, person '{request.Name}' not found");
 
             // make sure we don't have an existing startdate for this person
-            var existingDuty = repository.GetAstronautDutyByPersonIdAndStartDateAsync(person.Id, request.DutyStartDate);
+            var existingDuty = await repository.GetAstronautDutyByPersonIdAndStartDateAsync(person.Id, request.DutyStartDate);
 
             if (existingDuty is not null)
                 throw new BadHttpRequestException($"Bad Request, Duty for '{request.Name}' and start date {request.DutyStartDate} already exists");
